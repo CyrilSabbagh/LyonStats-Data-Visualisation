@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <script src = "node_modules/d3/d3.js"></script>
+        <script src="https://rawgithub.com/Caged/d3-tip/master/index.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/style.css"/>
+        <title>lyonStats</title>
+    </head>
+    <body>
+        <h1 class="textCenter"><img src="assets/logo-ol.png" alt="Olympique Lyonnais">Olympique Lyonnais Stats</h1>
+        
+        <div id="container" class="container-fluid">
+            <div class="row" id="viz">
+                <div class="col-lg-7 col-md-12">
+                    <h3 class="textCenter">Matches Results</h3>
+                    <div class="textCenter" style="font-weight: bold">
+                        <span id="win" style="color: #00a582">win</span> / <span id="loss" style="color: #ff8a7f">loss</span> / <span id="null" style="color: black">null</span>
+                    </div>
+                <svg id = "svgPara"></svg>
+            </div>
+            <div class="col-lg-5 col-md-12">
+                <h3 class="textCenter">Goals</h3>
+                <div class="textCenter" style="font-weight: bold">
+                    <span id="scored" style="color: #00a582">scored</span> / <span id="taken" style="color: #ff8a7f">taken</span>
+                </div>
+                <div id="forceGoals"></div>
+            </div>
+        </div>
+            <div class="row" id="brControl">
+                <div class="col-lg-8 col-md-12">
+                    <p class="textCenter">move/resize the bruch to change the timeframe</p>
+                    <svg id = "svgBrush"></svg>
+                </div>
+            </div>
+        </div>
+        <span class="signature">By <a href="https://cyrilsabbagh.com" title="">Cyril Sabbagh</a></span>
+        <script src = "js/para-coord.js"></script>
+        <script src = "js/brush.js"></script>
+        <script src = "js/forceGoalsCanvas.js"></script>
+        <script>
+            d3.json("data/lyonData.json", function(err, lyonData) {
+
+                // Format dates strings to date objects
+                lyonData.results.forEach(function(d, i) {
+                    var dateArr = d.date.split("/");
+                    d.dateMil = new Date(parseInt(dateArr[2]), parseInt(dateArr[1]), parseInt(dateArr[0]));
+                });
+
+                // Create the parallel coordinates
+                var svg = d3.select("#svgPara"); // get the svg element
+                var para_g = svg.append("g") //append a group
+                    .attr("transform", "translate(110, 35)"); // translate to good position
+                var paraCoords = d3.charts.paraCoords(); // get paraCoords reusable chart
+                paraCoords.data(lyonData.results); // set paraCoords data
+                paraCoords.teamName("OL"); // set paraCoords team name
+                paraCoords(para_g); // run paraCoords
+
+                // Create the force layout for goals
+                var forceDiv = d3.select("#forceGoals"); // get the div
+                var forceGoalsCanvas = d3.charts.forceGoalsCanvas(); // get forceGoalsCanvas reusable chart
+                forceGoalsCanvas.data(lyonData.results); // set forceGoalsCanvas data
+                forceGoalsCanvas.teamName("OL"); // set forceGoalsCanvas team name
+                forceGoalsCanvas.width(600); // set the width
+                forceGoalsCanvas(forceDiv); // run forceGoalsCanvas
+                
+                // Create the brush
+                var svgBrush = d3.select("#svgBrush"); // get the svg element
+                var bg = svgBrush.append("g") // append a group
+                    .attr("transform", "translate(35, 35)"); // translate to good position
+                var brush = d3.chart.brush(); // get brush reusable chart
+                brush.data(lyonData.results); // set brush data
+                brush.width(800); // set width
+                
+                brush.on("filter", function(d) { // set an event listener for the brush event
+                    // filtering data
+                    paraCoords.data(d); // passing filtered data to paraCoords
+                    forceGoalsCanvas.data(d); // passing filtered data to forceGoalsCanvas
+
+                    // trigger charts updates
+                    paraCoords.update();
+                    forceGoalsCanvas.update();
+
+                    // update count stats in the DOM
+                    d3.select("#win").html(paraCoords.winCount() + " wins");
+                    d3.select("#loss").html(paraCoords.lossCount() + " losses");
+                    d3.select("#null").html(paraCoords.nullCount() + " nulls");
+                    d3.select("#scored").html(forceGoalsCanvas.getTeamGoals() + " scored");
+                    d3.select("#taken").html(forceGoalsCanvas.getOpponentGoals() + " taken");
+                });
+
+                brush(bg);
+            });
+        </script>
+    </body>
+</html>
