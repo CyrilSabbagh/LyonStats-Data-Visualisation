@@ -8,7 +8,6 @@ if (!d3.charts) {
 d3.charts.paraCoords = function() {
     var data;
     var teamName;
-    var group;
     var xLeftAxis = 30;
     var xRightAxis = 600;
     var yScale;
@@ -21,7 +20,6 @@ d3.charts.paraCoords = function() {
      * @return {[type]}           No return
      */
     function chart(container) {
-        group = container;
 
         yScale = d3.scale.linear()
             .domain([0, d3.max(data, function(d) {
@@ -52,8 +50,8 @@ d3.charts.paraCoords = function() {
         .text(teamName);
 
         m.append("text")
-            .attr("text-anchor", "middle") // this makes it easy to centre the text as the transform is applied to the anchor
-        .attr("transform", "translate(" + (xRightAxis + 30) + "," + (353 / 2) + ")rotate(90)") // text is drawn off the screen top left, move down and out and rotate
+            .attr("text-anchor", "middle") 
+        .attr("transform", "translate(" + (xRightAxis + 30) + "," + (353 / 2) + ")rotate(90)") 
         .text("Opponents");
         update();
     }
